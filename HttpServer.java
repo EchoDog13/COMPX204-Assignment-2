@@ -17,16 +17,13 @@ public class HttpServer {
                 InetAddress clientAddress = s.getInetAddress();
                 String clientIP = clientAddress.getHostAddress();
                 System.out.println(clientIP);
+                HttpServerSession session = new HttpServerSession(s);
+                s.close();
 
             }
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
-    }
-
-    public class HttpServerSession extends Thread {
-        private Socket s;
-
     }
 
 }
