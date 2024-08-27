@@ -7,6 +7,7 @@ public class HttpServer {
     public static void main(String args[]) {
         final int port = 52000;
         ServerSocket server = null;
+        HttpServerSession session = null;
 
         try {
             server = new ServerSocket(port);
@@ -17,8 +18,10 @@ public class HttpServer {
             InetAddress clientAddress = s.getInetAddress();
             String clientIP = clientAddress.getHostAddress();
             System.out.println(clientIP);
-            HttpServerSession session = new HttpServerSession(s);
+            session = new HttpServerSession(s);
+
             session.start();
+            HttpServerRequest request = new HttpServerRequest();
             // s.close();
 
         } catch (Exception e) {

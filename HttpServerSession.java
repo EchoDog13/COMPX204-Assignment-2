@@ -1,5 +1,7 @@
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -23,21 +25,39 @@ public class HttpServerSession extends Thread {
         InetAddress clientAddress = s.getInetAddress();
         String clientIP = clientAddress.getHostAddress();
         System.out.println(clientIP);
+        HttpServerRequest request = new HttpServerRequest();
+        // request.process(""); // NEED TO GIVE REQUEST
+        byte[] buffer = new byte[1024];
+        FileInputStream fis = null;
 
         try {
-
             reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
             writer = new BufferedOutputStream(s.getOutputStream());
 
             String line;
-            while ((line = reader.readLine()) != null) {
+            while (request.isDone() == false) {
+                line = reader.readLine();
                 System.out.println(line);
+                request.process(line);
                 if (line.isEmpty()) {
                     break;
                 }
 
             }
+            System.out.println("!!!!!!!!!!!!");
+            System.out.println("Request Type: " + request.getRequestType());
+            System.out.println("File: " + request.getFile());
+            System.out.println("Host: " + request.getHost());
+
+            fis = new FileInputStream(new File(request.getFile()));
+
+            while (fis.available() > 0) {
+                int bytesRead = fis.read(buffer);
+                writer.write(buffer, 0, bytesRead);
+            }
             sendResponse(writer);
+
+            writer.flush();
 
         } catch (Exception e) {
             // TODO: handle exception
