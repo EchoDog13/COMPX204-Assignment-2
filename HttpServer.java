@@ -6,23 +6,32 @@ public class HttpServer {
 
     public static void main(String args[]) {
         final int port = 52000;
+        ServerSocket server = null;
 
         try {
-            ServerSocket server = new ServerSocket(port);
+            server = new ServerSocket(port);
             System.out.println("Web Server Starting on port " + port);
 
-            while (true) {
-                Socket s = server.accept();
-                System.out.println("Client connected");
-                InetAddress clientAddress = s.getInetAddress();
-                String clientIP = clientAddress.getHostAddress();
-                System.out.println(clientIP);
-                HttpServerSession session = new HttpServerSession(s);
-                s.close();
+            Socket s = server.accept();
+            System.out.println("Client connected");
+            InetAddress clientAddress = s.getInetAddress();
+            String clientIP = clientAddress.getHostAddress();
+            System.out.println(clientIP);
+            HttpServerSession session = new HttpServerSession(s);
+            session.start();
+            // s.close();
 
-            }
         } catch (Exception e) {
-            System.out.println("Error: " + e.getMessage());
+            // System.out.println("Error: " + e.getMessage());
+        } finally {
+            // Ensure the server socket is closed when done
+            try {
+                if (server != null && !server.isClosed()) {
+                    server.close();
+                }
+            } catch (Exception e) {
+                System.out.println("Error closing server socket: " + e.getMessage());
+            }
         }
     }
 
