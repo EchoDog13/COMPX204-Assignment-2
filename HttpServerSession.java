@@ -3,87 +3,111 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.util.ArrayList;
 
 public class HttpServerSession extends Thread {
-    private Socket s;
+    private Socket socket;
     private BufferedReader reader;
     private BufferedOutputStream writer;
+    private HttpServerRequest request;
 
-    public HttpServerSession(Socket s) {
-        this.s = s;
-
+    public HttpServerSession(Socket socket) {
+        this.socket = socket;
     }
 
     @Override
     public void run() {
         System.out.println("Client connected");
-        InetAddress clientAddress = s.getInetAddress();
+        InetAddress clientAddress = socket.getInetAddress();
         String clientIP = clientAddress.getHostAddress();
         System.out.println(clientIP);
-        HttpServerRequest request = new HttpServerRequest();
-        // request.process(""); // NEED TO GIVE REQUEST
-        byte[] buffer = new byte[1024];
-        FileInputStream fis = null;
 
         try {
-            reader = new BufferedReader(new InputStreamReader(s.getInputStream()));
-            writer = new BufferedOutputStream(s.getOutputStream());
+            reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer = new BufferedOutputStream(socket.getOutputStream());
 
+            request = new HttpServerRequest();
+
+            // Process the request
             String line;
-            while (request.isDone() == false) {
-                line = reader.readLine();
+            while ((line = reader.readLine()) != null && !line.isEmpty()) {
                 System.out.println(line);
                 request.process(line);
-                if (line.isEmpty()) {
-                    break;
-                }
-
             }
-            System.out.println("!!!!!!!!!!!!");
-            System.out.println("Request Type: " + request.getRequestType());
-            System.out.println("File: " + request.getFile());
-            System.out.println("Host: " + request.getHost());
 
-            fis = new FileInputStream(new File(request.getFile()));
-
-            while (fis.available() > 0) {
-                int bytesRead = fis.read(buffer);
-                writer.write(buffer, 0, bytesRead);
-            }
+            // Send the response after processing the request
             sendResponse(writer);
 
-            writer.flush();
-
         } catch (Exception e) {
-            // TODO: handle exception
+            e.printStackTrace();
         } finally {
             try {
-                if (s != null && !s.isClosed()) {
-                    // s.close();
+                if (socket != null && !socket.isClosed()) {
+                    socket.close();
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
                 System.out.println("Error closing socket: " + e.getMessage());
             }
         }
-
-        // s.getPort();
-
     }
 
     private void sendResponse(BufferedOutputStream bos) {
+        FileInputStream fis = null;
         try {
+            // Determine the file path based on the request
+            String hostPath = request.getHost();
 
-            println(bos, "HTTP/1.1 200 OK");
-            println(bos, "");
-            println(bos, "Hello World");
+            int colonIndex = hostPath.indexOf(':');
+
+            // Extract the substring before the colon
+            String prePortHost = hostPath.substring(0, colonIndex);
+
+            String path = prePortHost + "/" + request.getFile();
+            // path = "localhost/index.html";
+
+            File file = new File(path);
+
+            System.out.println("print path " + path);
+
+            System.out.println("file exists" + file.exists());
+            if (file.exists() && file.isFile() && file.getName() != "favicon.ico") {
+                // Send HTTP headers
+                println(bos, "HTTP/1.1 200 OK");
+                // println(bos, "Content-Type: text/html; charset=UTF-8");
+                println(bos, "Content-Length: " + file.length());
+                println(bos, ""); // Blank line to separate headers from the body
+
+                // Send the file content
+                fis = new FileInputStream(file);
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = fis.read(buffer)) != -1) {
+                    bos.write(buffer, 0, bytesRead);
+                }
+                System.out.println("File found at path: " + path);
+            } else {
+                // Handle file not found case
+                println(bos, "HTTP/1.1 404 Not Found");
+                println(bos, "Content-Type: text/html; charset=UTF-8");
+                println(bos, "Content-Length: " + "File Not Found".length());
+                println(bos, "");
+                println(bos, "File Not Found");
+                System.out.println("File not found at path: " + path);
+            }
+
             bos.flush();
         } catch (IOException e) {
             System.out.println("Error sending response: " + e.getMessage());
+        } finally {
+            try {
+                if (fis != null) {
+                    fis.close();
+                }
+            } catch (IOException e) {
+                System.out.println("Error closing FileInputStream: " + e.getMessage());
+            }
         }
     }
 
@@ -99,7 +123,6 @@ public class HttpServerSession extends Thread {
     }
 
     public static void main(String[] args) {
-        // TODO Auto-generated method stub
-
+        // TODO: Server setup and connection handling code goes here
     }
 }
