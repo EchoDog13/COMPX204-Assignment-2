@@ -89,7 +89,7 @@ public class HttpServerSession extends Thread {
                     int bytesRead;
                     while ((bytesRead = fis.read(buffer)) != -1) {
                         bos.write(buffer, 0, bytesRead);
-                        Thread.sleep(800);
+                        // Thread.sleep(800);
                     }
                 }
                 System.out.println("File found at path: " + path);
@@ -104,7 +104,9 @@ public class HttpServerSession extends Thread {
             bos.flush();
         } catch (IOException e) {
             System.out.println("Error sending response: " + e.getMessage());
-        } finally {
+        }
+
+        finally {
             try {
                 if (fis != null) {
                     fis.close();
