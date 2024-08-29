@@ -18,6 +18,7 @@ public class HttpServer {
             InetAddress clientAddress = s.getInetAddress();
             String clientIP = clientAddress.getHostAddress();
             System.out.println(clientIP);
+
             session = new HttpServerSession(s);
 
             session.start();

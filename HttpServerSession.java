@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.ArrayList;
 
 public class HttpServerSession extends Thread {
     private Socket socket;
@@ -53,7 +54,7 @@ public class HttpServerSession extends Thread {
         }
     }
 
-    private void sendResponse(BufferedOutputStream bos) {
+    private void sendResponse(BufferedOutputStream bos) throws InterruptedException {
         FileInputStream fis = null;
         try {
             // Determine the file path based on the request
@@ -72,7 +73,7 @@ public class HttpServerSession extends Thread {
             System.out.println("print path " + path);
 
             System.out.println("file exists" + file.exists());
-            if (file.exists() && file.isFile() && file.getName() != "favicon.ico") {
+            if (file.exists() && file.isFile()) {
                 // Send HTTP headers
                 println(bos, "HTTP/1.1 200 OK");
                 // println(bos, "Content-Type: text/html; charset=UTF-8");
@@ -80,18 +81,21 @@ public class HttpServerSession extends Thread {
                 println(bos, ""); // Blank line to separate headers from the body
 
                 // Send the file content
-                fis = new FileInputStream(file);
-                byte[] buffer = new byte[1024];
-                int bytesRead;
-                while ((bytesRead = fis.read(buffer)) != -1) {
-                    bos.write(buffer, 0, bytesRead);
+
+                synchronized (this) {
+
+                    fis = new FileInputStream(file);
+                    byte[] buffer = new byte[1024];
+                    int bytesRead;
+                    while ((bytesRead = fis.read(buffer)) != -1) {
+                        bos.write(buffer, 0, bytesRead);
+                        Thread.sleep(800);
+                    }
                 }
                 System.out.println("File found at path: " + path);
             } else {
                 // Handle file not found case
                 println(bos, "HTTP/1.1 404 Not Found");
-                println(bos, "Content-Type: text/html; charset=UTF-8");
-                println(bos, "Content-Length: " + "File Not Found".length());
                 println(bos, "");
                 println(bos, "File Not Found");
                 System.out.println("File not found at path: " + path);
@@ -120,6 +124,14 @@ public class HttpServerSession extends Thread {
             return false;
         }
         return true;
+    }
+
+    /**
+     * InnerHttpServerSession
+     */
+    public class HttpSession {
+        private ArrayList<HttpServerSession> sessions = new ArrayList<HttpServerSession>();
+
     }
 
     public static void main(String[] args) {
