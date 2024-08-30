@@ -97,7 +97,7 @@ public class HttpServerSession extends Thread {
                 // Handle file not found case
                 println(bos, "HTTP/1.1 404 Not Found");
                 println(bos, "");
-                println(bos, "File Not Found");
+                println(bos, "404: File Not Found");
                 System.out.println("File not found at path: " + path);
             }
 
