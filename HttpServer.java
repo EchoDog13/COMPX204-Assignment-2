@@ -25,7 +25,7 @@ public class HttpServer {
                 session = new HttpServerSession(s);
 
                 session.start();
-                HttpServerRequest request = new HttpServerRequest();
+                // HttpServerRequest request = new HttpServerRequest();
                 // s.close();
             }
         } catch (Exception e) {
